@@ -8,6 +8,8 @@ namespace ComcastUsageMeter.SampleConsole
     {
         static void Main(string[] args)
         {
+            Console.Title = "Comcast Usage Meter";
+
             Console.Write("Enter username: ");
             String username = Console.ReadLine();
 
@@ -15,7 +17,7 @@ namespace ComcastUsageMeter.SampleConsole
             String password = ReadMaskedPassword();
 
             Console.Clear();
-            Console.WriteLine("Loading, Please wait..."); Console.Write("1");
+            Console.WriteLine("Loading, Please wait...");
 
             // This is the version used by the official desktop client.
             const String version = "3.0";
