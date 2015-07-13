@@ -20,7 +20,7 @@ namespace ComcastUsageMeter.SampleConsole
             Console.WriteLine("Loading, Please wait...");
 
             // This is the version used by the official desktop client.
-            const String version = "3.0";
+            const String version = "4.0";
 
             // Sample Response: Authentication
             /* 
