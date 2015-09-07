@@ -101,11 +101,10 @@ namespace ComcastUsageMeter.SampleConsole
             var maximumPerDay = device.UsageRemaining / daysRemaining;
             Console.WriteLine($"To avoid overage charges, limit usage to {maximumPerDay:F2}{device.UsageUnitOfMeasurement} per day for the next {daysRemaining:0} days.");
 
-            if (System.Diagnostics.Debugger.IsAttached)
-            {
-                // Keep the console window open if running from visual studio.
-                Console.ReadKey(true);
-            }
+#if DEBUG
+            // Keep the console window open if running from visual studio.
+            Console.ReadKey(true);
+#endif
         }
 
         private static String ReadMaskedPassword()
