@@ -1,6 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Text;
 using ComcastUsageMeter.Shared;
+using Newtonsoft.Json;
 
 namespace ComcastUsageMeter.SampleConsole
 {
@@ -8,16 +12,54 @@ namespace ComcastUsageMeter.SampleConsole
     {
         static void Main(string[] args)
         {
+            String username = null;
+            String password = null;
+            Boolean outputJson = false;
+
+            // This is extremely rudimentary solution to an extremely rudimentary issue.
+            // I don't anticipate needing to add any additional command-line arguments.
+            if (args.Length == 2)
+            {
+                String[] validOptions = { "-config", "-c" };
+
+                String option = args[0];
+                String parameter = args[1];
+
+                if (validOptions.Contains(option.ToLower()) && File.Exists(parameter))
+                {
+                    try
+                    {
+                        var configuration = JsonConvert.DeserializeObject<UsageMeterConfiguration>(File.ReadAllText(parameter));
+                        username = configuration.Username;
+                        password = configuration.Password;
+                        outputJson = configuration.OutputJson;
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex);
+                    }
+                }
+            }
+            
             Console.Title = "Comcast Usage Meter";
 
-            Console.Write("Enter username: ");
-            String username = Console.ReadLine();
+            if (String.IsNullOrWhiteSpace(username))
+            {
+                Console.Write("Enter username: ");
+                username = Console.ReadLine();
+            }
 
-            Console.Write("Enter password: ");
-            String password = ReadMaskedPassword();
+            if (String.IsNullOrWhiteSpace(password))
+            {
+                Console.Write("Enter password: ");
+                password = ReadMaskedPassword();
+            }
 
-            Console.Clear();
-            Console.WriteLine("Loading, Please wait...");
+            if (!outputJson)
+            {
+                Console.Clear();
+                Console.WriteLine("Loading, Please wait...");
+            }
 
             // This is the version used by the official desktop client.
             const String version = "4.0";
@@ -38,7 +80,7 @@ namespace ComcastUsageMeter.SampleConsole
             var authenticateTask = UsageMeterClient.AuthenticateAsync(username, password, version);
             var authenticateResult = authenticateTask.Result;
 
-            String accessToken = authenticateResult.AccessToken;
+            String accessToken = authenticateResult.ResponseObject.AccessToken;
             UsageMeterClient client = new UsageMeterClient(username, accessToken, version);
 
             // Sample Response: Current Usage
@@ -75,36 +117,42 @@ namespace ComcastUsageMeter.SampleConsole
             var usageCurrentTask = client.GetUsageCurrentAsync();
             var usageCurrentResult = usageCurrentTask.Result;
 
-            var device = usageCurrentResult.Device;
-
-            Console.Clear();
-            Console.WriteLine($"MAC Address: {device.MacAddress}");
-            Console.WriteLine($"Usage Period: {device.CounterStart:d} - {device.CounterEnd:d}");
-            WriteProgressBarLine(device.UsageTotal, device.UsageAllowable, (Console.BufferWidth / 2));
-            Console.WriteLine($"You have used {device.UsageTotal}{device.UsageUnitOfMeasurement} ({device.UsagePercent}%) of the allotted {device.UsageAllowable}{device.UsageUnitOfMeasurement}.");
-            Console.WriteLine($"You have {device.UsageRemaining}{device.UsageUnitOfMeasurement} available for the remainder of the current usage period.");
+            var device = usageCurrentResult.ResponseObject.Device;
 
             // Determine how many days are left in this usage period.
             // Note: The counter resets at the beginning of each usage period.
             var remainingUsagePeriod = (device.CounterEnd - DateTime.Now);
             var daysRemaining = remainingUsagePeriod.TotalDays;
 
-            Console.WriteLine();
-            Console.WriteLine($"Usage will reset in {daysRemaining:0} days.");
-            Console.WriteLine();
-
             // Calculate average daily usage for this usage period.
             var averageDailyUsage = device.UsageTotal / (DateTime.Now - device.CounterStart).TotalDays;
-            Console.WriteLine($"During this usage period, you have used an average of {averageDailyUsage:F2}{device.UsageUnitOfMeasurement} per day.");
 
             // Calculate the average usage per day to avoid overage charges.
             var maximumPerDay = device.UsageRemaining / daysRemaining;
-            Console.WriteLine($"To avoid overage charges, limit usage to {maximumPerDay:F2}{device.UsageUnitOfMeasurement} per day for the next {daysRemaining:0} days.");
+
+            if (outputJson)
+            {
+                Console.WriteLine(JsonConvert.SerializeObject(usageCurrentResult, Formatting.Indented));
+            }
+            else
+            {
+                Console.Clear();
+                Console.WriteLine($"MAC Address: {device.MacAddress}");
+                Console.WriteLine($"Usage Period: {device.CounterStart:d} - {device.CounterEnd:d}");
+                WriteProgressBarLine(device.UsageTotal, device.UsageAllowable, (Console.BufferWidth/2));
+                Console.WriteLine($"You have used {device.UsageTotal}{device.UsageUnitOfMeasurement} ({device.UsagePercent}%) of the allotted {device.UsageAllowable}{device.UsageUnitOfMeasurement}.");
+                Console.WriteLine($"You have {device.UsageRemaining}{device.UsageUnitOfMeasurement} available for the remainder of the current usage period.");
+                Console.WriteLine();
+                Console.WriteLine($"Usage will reset in {daysRemaining:0} days.");
+                Console.WriteLine();
+                Console.WriteLine($"During this usage period, you have used an average of {averageDailyUsage:F2}{device.UsageUnitOfMeasurement} per day.");
+                Console.WriteLine($"To avoid overage charges, limit usage to {maximumPerDay:F2}{device.UsageUnitOfMeasurement} per day for the next {daysRemaining:0} days.");
 
 #if DEBUG
-            // Keep the console window open if running from visual studio.
-            Console.ReadKey(true);
+                // Keep the console window open if running from visual studio.
+                Console.ReadKey(true);
 #endif
+            }
         }
 
         private static String ReadMaskedPassword()

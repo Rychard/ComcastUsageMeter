@@ -33,7 +33,7 @@ namespace ComcastUsageMeter.Shared
             _version = version;
         }
 
-        public async Task<UsageResponse> GetUsageCurrentAsync()
+        public async Task<DeserializedResponse<UsageResponse>> GetUsageCurrentAsync()
         {
             var client = new HttpClient();
 
@@ -52,7 +52,7 @@ namespace ComcastUsageMeter.Shared
 
         #region Static
 
-        public static async Task<AuthenticationResponse> AuthenticateAsync(String username, String password, String version)
+        public static async Task<DeserializedResponse<AuthenticationResponse>> AuthenticateAsync(String username, String password, String version)
         {  
             var client = new HttpClient();
 
@@ -69,7 +69,7 @@ namespace ComcastUsageMeter.Shared
             return Deserialize<AuthenticationResponse>(responseContent);
         }
 
-        private static T Deserialize<T>(String serializedData) where T : class
+        private static DeserializedResponse<T> Deserialize<T>(String serializedData) where T : class
         {
             T deserialized;
             XmlSerializer serializer = new XmlSerializer(typeof(T));
@@ -78,7 +78,12 @@ namespace ComcastUsageMeter.Shared
                 deserialized = serializer.Deserialize(stringReader) as T;
             }
 
-            return deserialized;
+            var result = new DeserializedResponse<T>
+            {
+                ResponseBody = serializedData,
+                ResponseObject = deserialized
+            };
+            return result;
         }
 
         #endregion
