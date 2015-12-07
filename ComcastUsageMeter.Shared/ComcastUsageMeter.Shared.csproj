@@ -42,11 +42,14 @@
   <ItemGroup>
     <Compile Include="DeserializedResponse.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Responses\Account.cs" />
+    <Compile Include="Responses\AccountHistoryUsageResponse.cs" />
     <Compile Include="Responses\AuthenticationResponse.cs" />
     <Compile Include="Responses\ComcastResponseBase.cs" />
     <Compile Include="Responses\Device.cs" />
+    <Compile Include="Responses\HomeDeviceDetails.cs" />
     <Compile Include="Responses\Status.cs" />
-    <Compile Include="Responses\UsageResponse.cs" />
+    <Compile Include="Responses\AccountCurrentUsageResponse.cs" />
     <Compile Include="UsageMeterClient.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

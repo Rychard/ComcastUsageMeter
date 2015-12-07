@@ -11,17 +11,11 @@ namespace ComcastUsageMeter.Shared
 {
     public sealed class UsageMeterClient
     {
-        private static readonly string UrlAuthentication = "http://umcs.comcast.net/usage_meter/login/uid?callback=?";
-        private static readonly string UrlUsageCurrent = "http://umcs.comcast.net/usage_meter/usage/current";
-
-        // TODO: DisplayWiFiUsage
-        // https://umcs.comcast.net/usage_meter/usage/displayWiFiUsage
-        // username, access_token, version
-
-        // TODO: GetUsageHistory
-        // http://umcs.comcast.net/usage_meter/usage/history
-        // username, access_token, version
-
+        private static readonly String UrlAuthentication = "http://umcs.comcast.net/usage_meter/login/uid?callback=?";
+        private static readonly String UrlUsageAccountCurrent = "http://umcs.comcast.net/usage_meter/usage/accountCurrent";
+        private static readonly String UrlUsageAccountHistory = "http://umcs.comcast.net/usage_meter/usage/accountHistory";
+        private static readonly String UrlUsageDisplayWiFiUsage = "http://umcs.comcast.net/usage_meter/usage/displayWiFiUsage";
+        
         private readonly String _username;
         private readonly String _accessToken;
         private readonly String _version;
@@ -33,7 +27,7 @@ namespace ComcastUsageMeter.Shared
             _version = version;
         }
 
-        public async Task<DeserializedResponse<UsageResponse>> GetUsageCurrentAsync()
+        public async Task<DeserializedResponse<AccountCurrentUsageResponse>> GetUsageAccountCurrentAsync()
         {
             var client = new HttpClient();
 
@@ -45,9 +39,26 @@ namespace ComcastUsageMeter.Shared
             };
 
             var postContent = new FormUrlEncodedContent(postData);
-            var response = await client.PostAsync(UrlUsageCurrent, postContent);
+            var response = await client.PostAsync(UrlUsageAccountCurrent, postContent);
             var responseContent = await response.Content.ReadAsStringAsync();
-            return Deserialize<UsageResponse>(responseContent);
+            return Deserialize<AccountCurrentUsageResponse>(responseContent);
+        }
+
+        public async Task<DeserializedResponse<AccountHistoryUsageResponse>> GetUsageAccountHistoryAsync()
+        {
+            var client = new HttpClient();
+
+            List<KeyValue> postData = new List<KeyValue>
+            {
+                new KeyValue("username", _username),
+                new KeyValue("access_token", _accessToken),
+                new KeyValue("version", _version)
+            };
+
+            var postContent = new FormUrlEncodedContent(postData);
+            var response = await client.PostAsync(UrlUsageAccountCurrent, postContent);
+            var responseContent = await response.Content.ReadAsStringAsync();
+            return Deserialize<AccountHistoryUsageResponse>(responseContent);
         }
 
         #region Static
